@@ -1,100 +1,124 @@
-from Chromosome import *
-from front import *
-from couple import *
+from Chromosome import Chromosome
+from front import Front
+from couple import Couple
 import random
- 
+import copy
+import pytest
+
 class Population:
-    def __init__ (self, n_pop):
-        self.n_pop=n_pop
-        self.answers=[]
-        for i in range(n_pop):
-            self.answers.append(Chromosome())
-            self.answers[i].pop_id=i
+    def __init__ (self, numberOfIndividuals):
+        self.numberOfIndividuals = numberOfIndividuals
+        self.chromosomes=[]
+        self.fronts = []
+        self.averageFitness1 = 0
+        self.averageFitness2 = 0
 
-    def initialize(self):
-        for i in range (self.n_pop):
-            self.answers[i].initialize()
-        return self.answers
+    def initialize (self):
+        for i in range (self.numberOfIndividuals):
+            self.chromosomes.append (Chromosome())
+            self.chromosomes [i].populationID = i
+            self.chromosomes [i].initialize ()
+        return self.chromosomes
 
-    def calc_fitness(self):
-        for i in range (self.n_pop):
-            self.answers[i].calc_fitness_chrom()
+    def calculate_Fitness (self):
+        for i in range (self.numberOfIndividuals):
+            self.chromosomes [i].calculate_Fitness ()
+            self.averageFitness1 += (self.chromosomes [i].fitness1 / self.numberOfIndividuals)
+            self.averageFitness2 += (self.chromosomes [i].fitness2 / self.numberOfIndividuals)
 
-    def ns(self):
-        f1=Front()
-        for i in range(0,self.n_pop):
-            self.answers[i].domcount(self.n_pop,self)
-            self.answers[i].det_domby(self.n_pop,self)
-            if self.answers[i].det_rank1():
-                f1.answers.append(self.answers[i])
-        f=[]
-        f.append(copy.deepcopy(f1))
-        fi=Front()
-        fi=f1
-        a=1
-        while len(fi.answers) > 0:
-            q=[]
-            for j in range(0,len(fi.answers)):
-                for m in range(0,len(fi.answers[j].domby)):
-                    fi.answers[j].domby[m].n_domcount-=1
-                    # for l in range (0,self.n_pop):
-                    #     if fi.answers[j].domby[m].pop_id==self.answers[l].pop_id:
-                    #         self.answers[l].n_domcount-=1
-                    #         break
-                    # for p in range (0,len(fi.answers)):
-                    #     for k in range(0,len(fi.answers[p].domby)):
-                    #         if (fi.answers[p].domby[k].pop_id==fi.answers[j].domby[m].pop_id) and (j!=m):
-                    #             fi.answers[p].domby[k].n_domcount-=1
-                    #         break
-                    if fi.answers[j].domby[m].n_domcount==0:
-                        fi.answers[j].domby[m].rank=a+1
-                        # for r in range (0,self.n_pop):
-                        #     if fi.answers[j].domby[m].pop_id==self.answers[r].pop_id:
-                        #         self.answers[r].rank=a+1
-                        #         break
-                        q.append(fi.answers[j].domby[m])
-            fi=Front()
-            for n in range(0,len(q)):
-                fi.answers.append(copy.deepcopy(q[n]))
+    def NondominatedSorting (self):
+        f1 = Front()
+        for i in range (self.numberOfIndividuals):
+            self.chromosomes [i].count_BeingDominated (self)
+            self.chromosomes [i].detrmine_DominatedPoints (self)
+            if self.chromosomes [i].is_Rank1 ():
+                f1.answers.append (copy.deepcopy (self.chromosomes [i]))
+
+        self.fronts.append (copy.deepcopy (f1))
+
+        fi = copy.deepcopy (f1)
+        a = 1
+        while len (fi.answers) > 0:
+            q = []
+            for j in range (len (fi.answers)):
+                for m in range (len (fi.answers [j].dominatedPoints)):
+                    fi.answers [j].dominatedPoints [m].beingdominatedCount -= 1
+                    if fi.answers [j].dominatedPoints [m].beingdominatedCount == 0:
+                        fi.answers [j].dominatedPoints [m].rank = a+1
+                        q.append (fi.answers [j].dominatedPoints [m])
+            fi = Front()
+            for n in range (len (q)):
+                fi.answers.append (copy.deepcopy (q [n]))
             if fi.answers:
-                f.append(copy.deepcopy(fi))
-            a+=1
-        return f
+                self.fronts.append (copy.deepcopy (fi))
+            a += 1
+
+    def determine_FrontsAttributes (self):
+        for i in range (len (self.fronts)):
+            self.fronts [i].determine_AnswersID ()
+            self.fronts [i].assign_CrowdDistance ()
     
+    def determine_Fronts (self):
+        self.NondominatedSorting ()
+        self.determine_FrontsAttributes ()
+
     def tournamentselect(self, tournamentsize):
-        rand_index=random.sample(range(0,self.n_pop,tournamentsize),tournamentsize)
+        rand_index=random.sample(range(0,self.numberOfIndividuals,tournamentsize),tournamentsize)
         best_rank=1000
         best_distance=-1000
         selected_chromosome=None
         for s in range(0,tournamentsize):
-            if (self.answers[rand_index[s]].rank <= best_rank) and (self.answers[rand_index[s]].crowd_dist>=best_distance):
-                selected_chromosome=copy.deepcopy(self.answers[rand_index[s]])
-                best_rank=copy.deepcopy(self.answers[rand_index[s]].rank)
-                best_distance=copy.deepcopy(self.answers[rand_index[s]].crowd_dist)
+            if (self.chromosomes[rand_index[s]].rank <= best_rank) and (self.chromosomes[rand_index[s]].crowdingDistance>=best_distance):
+                selected_chromosome=copy.deepcopy(self.chromosomes[rand_index[s]])
+                best_rank=copy.deepcopy(self.chromosomes[rand_index[s]].rank)
+                best_distance=copy.deepcopy(self.chromosomes[rand_index[s]].crowdingDistance)
     
         return selected_chromosome
 
-    def select_parents (self):
-        first_parent=self.tournamentselect(3)
-        second_parent=self.tournamentselect(3)
+    def select_Parents (self):
+        first_parent=self.tournamentselect (3)
+        second_parent=self.tournamentselect (3)
         return first_parent, second_parent
 
-    def generate_children (self):
+    def generate_Children (self):
         i=0
-        children=Population(self.n_pop)
-        while (i<self.n_pop) :
-            first_parent, second_parent =self.select_parents() 
-            couple=Couple(first_parent,second_parent)     
-            child=couple.crossover()
-            children.answers[i].string=copy.deepcopy(child)
-            i+=1
+        children = Population (self.numberOfIndividuals)
+        while (i < self.numberOfIndividuals):
+            firstParent, secondParent = self.select_Parents () 
+            couple = Couple (firstParent, secondParent)     
+            child = couple.crossover ()
+            children.chromosomes.append(Chromosome ())
+            children.chromosomes[i].string = copy.deepcopy (child)
+            i += 1
         return children
 
-    def mutation (self):
-        for i in range(self.n_pop):
-            self.answers[i].mutation()
+    def mutate (self):
+        for i in range (self.numberOfIndividuals):
+            self.chromosomes [i].mutation()
         return self
 
-    def det_id(self):
-        for i in range(0,self.n_pop):
-            self.answers[i].pop_id=i
+    def determine_AnswersID (self):
+        for i in range (self.numberOfIndividuals):
+            self.chromosomes [i].populationID = i
+
+    def copyto_R (self, r):
+        for chrom in self.chromosomes:
+            r.chromosomes.append(copy.deepcopy (chrom))
+
+    # def appendto_R (self, r):
+    #     for j in range (self.numberOfIndividuals, 2 * self.numberOfIndividuals):
+    #         r.chromosomes [j] = copy.deepcopy (self.chromosomes [j-self.numberOfIndividuals])
+
+    def make_NewPopulation (self):
+        new_pop = Population (int (self.numberOfIndividuals/2))
+        new_pop_chromosomes = copy.deepcopy (self.fronts [0].answers)
+        frontIndex = 1
+        while (len (new_pop_chromosomes) < int(self.numberOfIndividuals/2)):
+            for answer in self.fronts [frontIndex].answers:
+                new_pop_chromosomes.append (copy.deepcopy (answer))
+            frontIndex += 1
+        if len (new_pop_chromosomes) > self.numberOfIndividuals :
+            new_pop.chromosomes = copy.deepcopy (new_pop_chromosomes [0:self.numberOfIndividuals-1])
+        else:
+            new_pop.chromosomes = copy.deepcopy (new_pop_chromosomes)
+        return new_pop

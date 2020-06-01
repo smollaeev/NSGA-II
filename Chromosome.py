@@ -6,93 +6,91 @@ import copy
 
 
 class Chromosome:
-    ax = 0
-    bx = 5
-    ay = 0
-    by = 3
-    p_mutation = 0.3
+    aX = 0
+    bX = 5
+    aY = 0
+    bY = 3
+    probabilityOfMutation = 0.3
+    numberOfBitsX=9
+    numberOfBitsY=9
 
-    def __init__(self, x_bit=9, y_bit=9):
-        self.__x_bit = x_bit  # This is equivalent to making the variable private!
-        self.__y_bit = y_bit
-        self.chrom_length = self.__x_bit+self.__y_bit
-        self.n_domcount = 0
-        self.domby = []
+    def __init__(self):
+        self.length = self.numberOfBitsX + self.numberOfBitsY
+        self.beingdominatedCount = 0
+        self.dominatedPoints = []
         self.rank = 0
-        self.crowd_dist = 0
-        self.pop_id = 0
-        self.front_id=0
+        self.crowdingDistance = 0
+        self.populationID = 0
+        self.frontID = 0
         self.string = []
         self.x = 0
         self.y = 0
-        self.fit1 = 0
-        self.fit2 = 0
+        self.fitness1 = 0
+        self.fitness2 = 0
 
-    def initialize(self):
-        self.string = [0] * self.chrom_length
+    def initialize (self):
+        self.string = [0] * self.length
 
-        n_rand_point = random.sample(range(self.chrom_length), 1)
-        rand_point = random.sample(range(self.chrom_length), n_rand_point[0])
-        for s in range(n_rand_point[0]):
-            self.string[rand_point[s]] = 1
+        numberOfRandomPoints = random.randint (0, self.length - 1)
+        randomPoints = random.sample(range(self.length), numberOfRandomPoints)
+        for s in range(numberOfRandomPoints):
+            self.string [randomPoints [s]] = 1
 
-    def bin2dec_x(self):
-        x_dec = 0
-        for i in range(self.__x_bit):
-            x_dec += self.string[i]*(2**(i))
-        x = self.ax+x_dec*(self.bx-self.ax)/((2**self.__x_bit)-1)
+    def binary2decimal_X (self):
+        decimalX = 0
+        for i in range (self.numberOfBitsX):
+            decimalX += self.string [i] * (2 ** (i))
+        x = self.aX + decimalX * (self.bX - self.aX) / ((2 ** self.numberOfBitsX) - 1)
         return x
 
-    def bin2dec_y(self):
-        y_dec = 0
-        for j in range(self.__x_bit, self.chrom_length):
-            y_dec += self.string[j]*(2**(j-self.__x_bit))
-        y = self.ay+y_dec*(self.by-self.ay)/((2**self.__y_bit)-1)
+    def binary2decimal_Y (self):
+        decimalY = 0
+        for j in range (self.numberOfBitsX, self.length):
+            decimalY += self.string [j] * (2 ** (j - self.numberOfBitsX))
+        y = self.aY + decimalY * (self.bY - self.aY) / ((2 ** self.numberOfBitsY) - 1)
         return y
 
-    def decode_x(self):
-        self.x = self.bin2dec_x()
+    def decode_X (self):
+        self.x = self.binary2decimal_X ()
         return self.x
 
-    def decode_y(self):
-        self.y = self.bin2dec_y()
+    def decode_Y (self):
+        self.y = self.binary2decimal_Y ()
         return self.y
 
-    def calc_fitness1_chrom(self):
-        self.x = self.decode_x()
-        self.y = self.decode_y()
-        self.fit1 = 4*self.x**2+4*self.y**2
-        return self.fit1
+    def calculate_Fitness1 (self):
+        self.x = self.decode_X ()
+        self.y = self.decode_Y ()
+        self.fitness1 = 4 * self.x ** 2 + 4 * self.y ** 2
+        return self.fitness1
 
-    def calc_fitness2_chrom(self):
-        self.x = self.decode_x()
-        self.y = self.decode_y()
-        self.fit2 = (self.x-5)**2+(self.y-5)**2
-        return self.fit2
+    def calculate_Fitness2 (self):
+        self.x = self.decode_X ()
+        self.y = self.decode_Y ()
+        self.fitness2 = (self.x - 5) ** 2 + (self.y - 5) ** 2
+        return self.fitness2
 
-    def calc_fitness_chrom(self):
-        self.calc_fitness1_chrom()
-        self.calc_fitness2_chrom()
+    def calculate_Fitness (self):
+        self.calculate_Fitness1 ()
+        self.calculate_Fitness2 ()
 
-    def domcount(self, n_pop, pop):
-        for j in range(0, n_pop):
-            if (self.fit1 > pop.answers[j].fit1) and (self.fit2 > pop.answers[j].fit2):
-                self.n_domcount += 1
-        return self.n_domcount
+    def count_BeingDominated (self, population):
+        for j in range (population.numberOfIndividuals): 
+            if (self.fitness1 > population.chromosomes [j].fitness1) and (self.fitness2 > population.chromosomes [j].fitness2):
+                self.beingdominatedCount += 1
 
-    def det_domby(self, n_pop, pop):
-        for j in range(0,n_pop):
-            if (self.fit1 < pop.answers[j].fit1) and (self.fit2 < pop.answers[j].fit2):
-                self.domby.append(pop.answers[j])
-        return self.domby
+    def detrmine_DominatedPoints (self, population):
+        for j in range (population.numberOfIndividuals):
+            if (self.fitness1 < population.chromosomes [j].fitness1) and (self.fitness2 < population.chromosomes [j].fitness2):
+                self.dominatedPoints.append (population.chromosomes [j])
 
-    def det_rank1(self):
-        if self.n_domcount == 0:
+    def is_Rank1 (self):
+        if self.beingdominatedCount == 0:
             self.rank = 1
             return True
 
     def mutation(self):
-        rand = random.random()
-        if rand < self.p_mutation:
-            rand_point = random.randint(0, self.chrom_length-1)
-            self.string[rand_point] = not (self.string[rand_point])
+        rand = random.random ()
+        if rand < self.probabilityOfMutation:
+            randomPoint = random.randint (0, self.length - 1)
+            self.string [randomPoint] = not (self.string [randomPoint])
