@@ -26,31 +26,35 @@ class Population:
             self.averageFitness1 += (self.chromosomes [i].fitness1 / self.numberOfIndividuals)
             self.averageFitness2 += (self.chromosomes [i].fitness2 / self.numberOfIndividuals)
 
+    def determine_Domination (self):
+        for chromosome in self.chromosomes:
+            chromosome.count_BeingDominated (self)
+            chromosome.detrmine_DominatedPoints (self)
+
     def NondominatedSorting (self):
         f1 = Front()
-        for i in range (self.numberOfIndividuals):
-            self.chromosomes [i].count_BeingDominated (self)
-            self.chromosomes [i].detrmine_DominatedPoints (self)
-            if self.chromosomes [i].is_Rank1 ():
-                f1.answers.append (copy.deepcopy (self.chromosomes [i]))
+        for chromosome in self.chromosomes:
+            if chromosome.is_Rank1 ():
+                f1.answers.append (chromosome)
 
-        self.fronts.append (copy.deepcopy (f1))
-
-        fi = copy.deepcopy (f1)
+        self.fronts.append (f1)
+        fi = f1
         a = 1
         while len (fi.answers) > 0:
             q = []
-            for j in range (len (fi.answers)):
-                for m in range (len (fi.answers [j].dominatedPoints)):
-                    fi.answers [j].dominatedPoints [m].beingdominatedCount -= 1
-                    if fi.answers [j].dominatedPoints [m].beingdominatedCount == 0:
-                        fi.answers [j].dominatedPoints [m].rank = a+1
-                        q.append (fi.answers [j].dominatedPoints [m])
+            for answer in fi.answers:
+                for dominatedPoint in answer.dominatedPoints:
+                    dominatedPoint.beingdominatedCount -= 1
+                    if dominatedPoint.beingdominatedCount == 0:
+                        dominatedPoint.rank = a + 1
+                        self.chromosomes [dominatedPoint.populationID].rank = a + 1
+                        q.append (dominatedPoint)
+
             fi = Front()
             for n in range (len (q)):
-                fi.answers.append (copy.deepcopy (q [n]))
+                fi.answers.append (q [n])
             if fi.answers:
-                self.fronts.append (copy.deepcopy (fi))
+                self.fronts.append (fi)
             a += 1
 
     def determine_FrontsAttributes (self):
@@ -59,7 +63,13 @@ class Population:
             self.fronts [i].assign_CrowdDistance ()
     
     def determine_Fronts (self):
+        self.determine_Domination ()
         self.NondominatedSorting ()
+        sumOfFronts=0
+        for front in self.fronts:
+            sumOfFronts += len(front.answers)
+        if sumOfFronts !=self.numberOfIndividuals:
+            b=2
         self.determine_FrontsAttributes ()
 
     def tournamentselect(self, tournamentsize):
@@ -110,15 +120,16 @@ class Population:
     #         r.chromosomes [j] = copy.deepcopy (self.chromosomes [j-self.numberOfIndividuals])
 
     def make_NewPopulation (self):
-        new_pop = Population (int (self.numberOfIndividuals/2))
-        new_pop_chromosomes = copy.deepcopy (self.fronts [0].answers)
+        new_pop_length=int (self.numberOfIndividuals/2)
+        new_pop = Population (new_pop_length)
+        new_pop_chromosomes = self.fronts [0].answers
         frontIndex = 1
-        while (len (new_pop_chromosomes) < int(self.numberOfIndividuals/2)):
+        while (len (new_pop_chromosomes) < new_pop_length):
             for answer in self.fronts [frontIndex].answers:
-                new_pop_chromosomes.append (copy.deepcopy (answer))
+                new_pop_chromosomes.append (answer)
             frontIndex += 1
-        if len (new_pop_chromosomes) > self.numberOfIndividuals :
-            new_pop.chromosomes = copy.deepcopy (new_pop_chromosomes [0:self.numberOfIndividuals-1])
+        if len (new_pop_chromosomes) > new_pop_length :
+            new_pop.chromosomes = copy.deepcopy (new_pop_chromosomes [0:new_pop_length])
         else:
             new_pop.chromosomes = copy.deepcopy (new_pop_chromosomes)
         return new_pop

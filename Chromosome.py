@@ -10,7 +10,7 @@ class Chromosome:
     bX = 5
     aY = 0
     bY = 3
-    probabilityOfMutation = 0.3
+    probabilityOfMutation = 0.6
     numberOfBitsX=9
     numberOfBitsY=9
 
@@ -75,11 +75,13 @@ class Chromosome:
         self.calculate_Fitness2 ()
 
     def count_BeingDominated (self, population):
+        self.beingdominatedCount = 0
         for j in range (population.numberOfIndividuals): 
             if (self.fitness1 > population.chromosomes [j].fitness1) and (self.fitness2 > population.chromosomes [j].fitness2):
                 self.beingdominatedCount += 1
 
     def detrmine_DominatedPoints (self, population):
+        self.dominatedPoints = []
         for j in range (population.numberOfIndividuals):
             if (self.fitness1 < population.chromosomes [j].fitness1) and (self.fitness2 < population.chromosomes [j].fitness2):
                 self.dominatedPoints.append (population.chromosomes [j])

@@ -2,7 +2,7 @@ import copy
 import random
 
 class Couple:
-    probabilityOfCrossover = 0.7
+    probabilityOfCrossover = 0.9
     crossoverPoint1 = 5
     crossoverPoint2 = 14
 
