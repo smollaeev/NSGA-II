@@ -1,7 +1,7 @@
 from solution import Solution
 
 def main():
-    numberOfGenerations = 200
+    numberOfGenerations = 100
     numberOfIndividuals = 60
     solution = Solution ()
     solution.NSGA (numberOfGenerations, numberOfIndividuals)

@@ -33,12 +33,18 @@ class Solution:
         print(f'    Average Fitness = {self.averagesOfFitness1 [self.generation]} , {self.averagesOfFitness2 [self.generation]}')
 
     def show_Diagrams (self):
-        plt.plot (self.averagesOfFitness1)
-        plt.ylabel ('Average Fitness of f1 in Each Generation')
-        plt.show ()
+        fig, axes = plt.subplots (nrows = 1, ncols = 2)
+        axes [0].plot (self.averagesOfFitness1)
+        axes [0].set_title ('Average of F1 in Each Generation')
 
-        plt.plot (self.averagesOfFitness2)
-        plt.ylabel ('Average Fitness of f2 in Each Generation')
+        axes [1].plot (self.averagesOfFitness2)
+        axes [1].set_title ('Average of F2 in Each Generation')
+        # plt.plot (self.averagesOfFitness1)
+        # plt.ylabel ('Average Fitness of f1 in Each Generation')
+        # plt.show ()
+
+        # plt.plot (self.averagesOfFitness2)
+        # plt.ylabel ('Average Fitness of f2 in Each Generation')
         plt.show ()
         
         plt.scatter (self.xAxis, self.yAxis, label= "stars", color= "green", marker= "*", s=30) 
